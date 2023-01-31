@@ -6,6 +6,7 @@ import sys
 from bs4 import BeautifulSoup
 from pathlib import Path
 from pathvalidate import ValidationError, validate_filename
+from pathvalidate import sanitize_filename
 
 
 def get_book_info(url):
@@ -62,13 +63,15 @@ if __name__ == '__main__':
 
     for i in range(11):
         try:
-            url = f'https://tululu.org/txt.php?id={i}'
-            response = requests.get(url)
+            book_url = f'https://tululu.org/b{i}/'
+            response = requests.get(book_url)
             check_for_redirect(response)
             response.raise_for_status()
-            filename = f'books/{i}.txt'
-            with open(filename, 'wb') as file:
-                file.write(response.content)
+            [title, author]  = get_book_info(book_url)
+            filename = f'{i}.{title}.txt'
+            download_url = f'https://tululu.org/txt.php?id={i}'
+            book_path = download_txt(download_url, filename)
+            print(f'Книга {title} сохранена в {book_path}')
         except requests.exceptions.HTTPError:
             print('Ошибка скачивания')
 
