@@ -94,6 +94,17 @@ def download_comments(url):
     return comments
 
 
+def get_book_genre(url):
+    genres = []
+    response = requests.get(url)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, 'lxml')
+    raw_genres = soup.find('span', class_='d_book').find_all('a')
+    for genre in raw_genres:
+        genres.append(genre.text)
+    return genres
+
+
 def check_for_redirect(response):
     if response.history:
         raise requests.exceptions.HTTPError
@@ -126,6 +137,9 @@ if __name__ == '__main__':
             print(print(f'Обложка сохранена в {img_path}'))
             comments = download_comments(book_url)
             print(comments)
+            genres = get_book_genre(book_url)
+            print(genres)
+
         except requests.exceptions.HTTPError:
             print('Ошибка скачивания')
 
