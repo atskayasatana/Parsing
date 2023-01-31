@@ -82,6 +82,18 @@ def download_img(url, filename, folder='images/'):
     return book_image_path
 
 
+def download_comments(url):
+    comments = []
+    response = requests.get(url)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, 'lxml')
+    post_text = soup.find_all('div', class_='texts')
+
+    for p in post_text:
+        comments.append(p.find('span').text)
+    return comments
+
+
 def check_for_redirect(response):
     if response.history:
         raise requests.exceptions.HTTPError
@@ -112,6 +124,8 @@ if __name__ == '__main__':
             image_name = urlparse(book_cover_full_path).path.split('/')[-1]
             img_path = download_img(book_cover_full_path, image_name)
             print(print(f'Обложка сохранена в {img_path}'))
+            comments = download_comments(book_url)
+            print(comments)
         except requests.exceptions.HTTPError:
             print('Ошибка скачивания')
 
