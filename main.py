@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from pathlib import Path
 from pathvalidate import ValidationError, validate_filename
 from pathvalidate import sanitize_filename
+from urllib.parse import urljoin, urlparse, urlsplit
 
 
 def get_book_info(url):
@@ -40,6 +41,12 @@ def download_txt(url, filename, folder='books/'):
     Returns:
         str: Путь до файла, куда сохранён текст.
     """
+    response = requests.get(book_url)
+
+    check_for_redirect(response)
+
+    response.raise_for_status()
+
     sanitized_filename = sanitize_filename(filename)
 
     book_path =  os.path.join(folder, sanitized_filename)
@@ -48,6 +55,31 @@ def download_txt(url, filename, folder='books/'):
         file.write(response.content)
 
     return book_path
+
+
+def download_img(url, filename, folder='images/'):
+    """Функция для скачивания обложек.
+    Args:
+        url (str): Cсылка на страницу с описанием.
+        filename (str): Имя файла, с которым сохранять.
+        folder (str): Папка, куда сохранять.
+    Returns:
+        str: Путь до файла, куда сохраняем обложку.
+    """
+    response = requests.get(url)
+
+    check_for_redirect(response)
+
+    response.raise_for_status()
+
+    sanitized_filename = sanitize_filename(filename)
+
+    book_image_path =  os.path.join(folder, sanitized_filename)
+
+    with open(book_image_path, 'wb') as file:
+        file.write(response.content)
+
+    return book_image_path
 
 
 def check_for_redirect(response):
@@ -60,6 +92,7 @@ if __name__ == '__main__':
     BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
     Path(os.path.join(BASE_DIR,'books')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(BASE_DIR, 'images')).mkdir(parents=True, exist_ok=True)
 
     for i in range(11):
         try:
@@ -67,11 +100,18 @@ if __name__ == '__main__':
             response = requests.get(book_url)
             check_for_redirect(response)
             response.raise_for_status()
+            soup = BeautifulSoup(response.text, 'lxml')
             [title, author]  = get_book_info(book_url)
             filename = f'{i}.{title}.txt'
             download_url = f'https://tululu.org/txt.php?id={i}'
             book_path = download_txt(download_url, filename)
             print(f'Книга {title} сохранена в {book_path}')
+            book_image = soup.find('div', class_='bookimage').find('img')['src']
+            book_cover_full_path = urljoin('https://tululu.org', book_image)
+            print(book_cover_full_path)
+            image_name = urlparse(book_cover_full_path).path.split('/')[-1]
+            img_path = download_img(book_cover_full_path, image_name)
+            print(print(f'Обложка сохранена в {img_path}'))
         except requests.exceptions.HTTPError:
             print('Ошибка скачивания')
 
