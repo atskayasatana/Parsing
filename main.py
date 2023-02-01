@@ -1,3 +1,4 @@
+import argparse
 import os
 import re
 import requests
@@ -8,11 +9,6 @@ from pathlib import Path
 from pathvalidate import ValidationError, validate_filename
 from pathvalidate import sanitize_filename
 from urllib.parse import urljoin, urlparse, urlsplit
-
-
-def get_book_id(url):
-    id =  re.findall('[0-9]+', url)
-    return id
 
 
 def download_txt(url, filename, folder='books/'):
@@ -65,25 +61,16 @@ def download_img(url, filename, folder='images/'):
     return book_image_path
 
 
-def get_book_genre(url):
-    genres = []
-    response = requests.get(url)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, 'lxml')
-    raw_genres = soup.find('span', class_='d_book').find_all('a')
-    for genre in raw_genres:
-        genres.append(genre.text)
-    return genres
-
-
 def parse_book_page(url):
 
     book_description = {}
     book = []
     comments = []
     genres = []
+
     response = requests.get(url)
     response.raise_for_status()
+    check_for_redirect(response)
 
     soup = BeautifulSoup(response.text, 'lxml')
 
@@ -123,12 +110,19 @@ def check_for_redirect(response):
 
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser(description='Скачиваем книги с сайта tululu.org')
+    parser.add_argument('start_id', help='С какого id начнем', default=1)
+    parser.add_argument('end_id', help='На каком id закончим', default=10)
+    args = parser.parse_args()
+    if args.start_id > args.end_id:
+        args.start_id, args.end_id = args.end_id, args.start_id
+
     BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
     Path(os.path.join(BASE_DIR,'books')).mkdir(parents=True, exist_ok=True)
     Path(os.path.join(BASE_DIR, 'images')).mkdir(parents=True, exist_ok=True)
 
-    for i in range(1,11):
+    for i in range(args.start_id, args.end_id):
         try:
             book_url = f'https://tululu.org/b{i}/'
             print(parse_book_page(book_url))
