@@ -1,14 +1,11 @@
 import argparse
 import os
-import re
 import requests
-import sys
 
 from bs4 import BeautifulSoup
 from pathlib import Path
-from pathvalidate import ValidationError, validate_filename
 from pathvalidate import sanitize_filename
-from urllib.parse import urljoin, urlparse, urlsplit
+from urllib.parse import urljoin
 
 
 def download_txt(url, filename, folder='books/'):
@@ -20,19 +17,14 @@ def download_txt(url, filename, folder='books/'):
     Returns:
         str: Путь до файла, куда сохранён текст.
     """
-    response = requests.get(book_url)
-
-    check_for_redirect(response)
-
+    response = requests.get(url)
     response.raise_for_status()
 
-    sanitized_filename = sanitize_filename(filename)
-
-    book_path =  os.path.join(folder, sanitized_filename)
-
-    with open(book_path, 'wb') as file:
-        file.write(response.content)
-
+    if check_for_redirect(response) == 0:
+        sanitized_filename = sanitize_filename(filename)
+        book_path = os.path.join(folder, sanitized_filename)
+        with open(book_path, 'wb') as file:
+            file.write(response.content)
     return book_path
 
 
@@ -46,17 +38,13 @@ def download_img(url, filename, folder='images/'):
         str: Путь до файла, куда сохраняем обложку.
     """
     response = requests.get(url)
-
-    check_for_redirect(response)
-
     response.raise_for_status()
 
-    sanitized_filename = sanitize_filename(filename)
-
-    book_image_path =  os.path.join(folder, sanitized_filename)
-
-    with open(book_image_path, 'wb') as file:
-        file.write(response.content)
+    if check_for_redirect(response) == 0:
+        sanitized_filename = sanitize_filename(filename)
+        book_image_path = os.path.join(folder, sanitized_filename)
+        with open(book_image_path, 'wb') as file:
+            file.write(response.content)
 
     return book_image_path
 
@@ -76,7 +64,6 @@ def parse_book_page(url):
 
     # автор и название
     title_author = soup.find('h1').text.replace('\xa0', '').split('::')
-    print(title_author)
 
     for elem in title_author:
         elem = elem.strip()
@@ -100,38 +87,50 @@ def parse_book_page(url):
 
     book_description['genres'] = genres
 
+    # обложка
+
+    img_short_path = soup.find('div', class_='bookimage').find('img')['src']
+    img_path = urljoin('https://tululu.org/', img_short_path)
+
+    book_description['cover'] = img_path
+
     return book_description
 
 
 def check_for_redirect(response):
     if response.history:
         raise requests.exceptions.HTTPError
+        return 1
+    else:
+        return 0
 
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Скачиваем книги с сайта tululu.org')
-    parser.add_argument('start_id', help='С какого id начнем', default=1)
-    parser.add_argument('end_id', help='На каком id закончим', default=10)
+    parser = argparse.ArgumentParser(
+                 description='Скачиваем книги с сайта tululu.org'
+                                    )
+    parser.add_argument('--start_id', help='С какого id начнем', default=1)
+    parser.add_argument('--end_id', help='На каком id закончим', default=10)
     args = parser.parse_args()
-    if args.start_id > args.end_id:
-        args.start_id, args.end_id = args.end_id, args.start_id
+    start_id = int(args.start_id)
+    end_id = int(args.end_id)
+    if start_id > end_id:
+        start_id, end_id = end_id, start_id
 
     BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
-    Path(os.path.join(BASE_DIR,'books')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(BASE_DIR, 'books')).mkdir(parents=True, exist_ok=True)
     Path(os.path.join(BASE_DIR, 'images')).mkdir(parents=True, exist_ok=True)
 
-    for i in range(args.start_id, args.end_id):
+    for i in range(int(args.start_id), int(args.end_id)):
         try:
             book_url = f'https://tululu.org/b{i}/'
-            print(parse_book_page(book_url))
+            book_description = parse_book_page(book_url)
+            book_download_url = f'https://tululu.org/txt.php?id={i}'
+            book_filename = f'{i}. {book_description["title"]}.txt'
+            book_img_filename = f'{i}. {book_description["title"]}.jpg'
+            download_txt(book_download_url, book_filename)
+            download_img(book_description['cover'], book_img_filename)
         except requests.exceptions.HTTPError:
             print('Ошибка скачивания')
-
-
-
-
-
-
-
