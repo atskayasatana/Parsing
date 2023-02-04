@@ -65,16 +65,13 @@ def parse_book_page(response):
 
     # комментарии
     raw_comments = soup.find_all('div', class_='texts')
-
-    for comment in raw_comments:
-        comments.append(comment.find('span').text)
+    comments = [comment.find('span').text for comment in raw_comments]
 
     book_description['comments'] = comments
 
     # жанры
     raw_genres = soup.find('span', class_='d_book').find_all('a')
-    for genre in raw_genres:
-        genres.append(genre.text)
+    genres = [genre.text for genre in raw_genres]
 
     book_description['genres'] = genres
 
@@ -84,6 +81,8 @@ def parse_book_page(response):
     img_path = urljoin('https://tululu.org/', img_short_path)
 
     book_description['cover'] = img_path
+
+
 
     return book_description
 
