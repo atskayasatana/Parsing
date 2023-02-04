@@ -110,11 +110,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
                  description='Скачиваем книги с сайта tululu.org'
                                     )
-    parser.add_argument('--start_id', help='С какого id начнем', default=1)
-    parser.add_argument('--end_id', help='На каком id закончим', default=10)
+    parser.add_argument('--start_id', help='С какого id начнем', type=int, default=1)
+    parser.add_argument('--end_id', help='На каком id закончим', type=int, default=10)
     args = parser.parse_args()
-    start_id = int(args.start_id)
-    end_id = int(args.end_id)
+
+    start_id = parser.start_id
+    end_id = parser.end_id
+
     if start_id > end_id:
         start_id, end_id = end_id, start_id
 
@@ -123,7 +125,7 @@ if __name__ == '__main__':
     Path(os.path.join(BASE_DIR, 'books')).mkdir(parents=True, exist_ok=True)
     Path(os.path.join(BASE_DIR, 'images')).mkdir(parents=True, exist_ok=True)
 
-    for i in range(int(args.start_id), int(args.end_id)):
+    for i in range(start_id, end_id):
         try:
             book_url = f'https://tululu.org/b{i}/'
             book_description = parse_book_page(book_url)
