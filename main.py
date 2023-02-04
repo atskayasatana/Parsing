@@ -120,10 +120,10 @@ if __name__ == '__main__':
     if start_id > end_id:
         start_id, end_id = end_id, start_id
 
-    BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+    base_dir = os.path.dirname(os.path.realpath(__file__))
 
-    Path(os.path.join(BASE_DIR, 'books')).mkdir(parents=True, exist_ok=True)
-    Path(os.path.join(BASE_DIR, 'images')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(base_dir, 'books')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(base_dir, 'images')).mkdir(parents=True, exist_ok=True)
 
     for i in range(start_id, end_id):
         try:
