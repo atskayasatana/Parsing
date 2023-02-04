@@ -69,7 +69,7 @@ def parse_book_page(response):
     # обложка
 
     img_short_path = soup.find('div', class_='bookimage').find('img')['src']
-    img_path = urljoin('https://tululu.org/', img_short_path)
+    img_path = urljoin(response.url, img_short_path)
 
 
     book_description = {
