@@ -5,7 +5,9 @@ import requests
 from bs4 import BeautifulSoup
 from pathlib import Path
 from pathvalidate import sanitize_filename
+from retry import retry
 from urllib.parse import urljoin
+from urllib3.exceptions import HTTPError, ProxyError
 
 
 def download_txt(url, payload, filename, folder='books/'):
@@ -79,42 +81,64 @@ def parse_book_page(response):
 
 
 def check_for_redirect(response):
-    if response.history:
-        raise requests.exceptions.HTTPError
+    url = response.url
+    if url == 'https://tululu.org/' and response.history:
+        raise HTTPError
+        print(response.history)
 
-if __name__ == '__main__':
 
+@retry(requests.ConnectionError, tries=100, delay=1)
+def main():
     parser = argparse.ArgumentParser(
                  description='Скачиваем книги с сайта tululu.org'
                                     )
-    parser.add_argument('--start_id', help='С какого id начнем', type=int, default=1)
-    parser.add_argument('--end_id', help='На каком id закончим', type=int, default=10)
+    parser.add_argument('start_id',
+                        nargs='?',
+                        help='С какого id начнем',
+                        type=int,
+                        default=1
+                        )
+    parser.add_argument('end_id',
+                        nargs='?',
+                        help='На каком id закончим',
+                        type=int,
+                        default=10)
     args = parser.parse_args()
 
-    book_start_id = parser.start_id
-    book_end_id = parser.end_id
+    book_start_id = args.start_id
+    book_end_id = args.end_id
 
     if book_start_id > book_end_id:
         book_start_id, book_end_id = book_end_id, book_start_id
 
     project_dir = os.path.dirname(os.path.realpath(__file__))
 
-    Path(os.path.join(project_dir, 'books')).mkdir(parents=True, exist_ok=True)
-    Path(os.path.join(project_dir, 'images')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(project_dir, 'books'))\
+        .mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(project_dir, 'images'))\
+        .mkdir(parents=True, exist_ok=True)
 
-    for book_id in range(start_id, end_id):
+    for book_id in range(book_start_id, book_end_id):
         try:
-            payload = {'b':book_id}
             url = 'https://tululu.org'
-            response = requests.get(url, params=payload)
-            response.raise_for_status()
+            response = requests.get(urljoin(url, f'b{book_id}'))
             check_for_redirect(response)
+            response.raise_for_status()
             book_description = parse_book_page(response)
             book_download_url = f'{urljoin(url,"txt.php")}'
-            book_download_params = {'id':book_id}
-            book_filename = f'{i}. {book_description["title"]}.txt'
-            book_img_filename = f'{i}. {book_description["title"]}.jpg'
-            download_txt(book_download_url, book_download_params, book_filename)
+            book_download_params = {'id': book_id}
+            book_filename = f'{book_id}. {book_description["title"]}.txt'
+            book_img_filename = f'{book_id}. {book_description["title"]}.jpg'
+            download_txt(book_download_url,
+                         book_download_params,
+                         book_filename
+                         )
             download_img(book_description['cover'], book_img_filename)
-        except requests.exceptions.HTTPError:
+        except HTTPError:
             print('Ошибка скачивания')
+        except ProxyError:
+            print('Ошибка соединения')
+
+
+if __name__ == '__main__':
+    main()
