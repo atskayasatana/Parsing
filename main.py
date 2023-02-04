@@ -127,9 +127,9 @@ if __name__ == '__main__':
 
     for book_id in range(start_id, end_id):
         try:
-            book_url = f'https://tululu.org/b{i}/'
+            book_url = f'https://tululu.org/b{book_id}/'
             book_description = parse_book_page(book_url)
-            book_download_url = f'https://tululu.org/txt.php?id={i}'
+            book_download_url = f'https://tululu.org/txt.php?id={book_id}'
             book_filename = f'{i}. {book_description["title"]}.txt'
             book_img_filename = f'{i}. {book_description["title"]}.jpg'
             download_txt(book_download_url, book_filename)
