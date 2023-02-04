@@ -52,21 +52,16 @@ def download_img(url, filename, folder='images/'):
 def parse_book_page(response):
 
     book_description = {}
-    book = []
     comments = []
     genres = []
 
     soup = BeautifulSoup(response.text, 'lxml')
 
     # автор и название
-    title_author = soup.find('h1').text.replace('\xa0', '').split('::')
+    title, author = soup.find('h1').text.replace('\xa0', '').split('::')
 
-    for elem in title_author:
-        elem = elem.strip()
-        book.append(elem)
-
-    book_description['author'] = book[1]
-    book_description['title'] = book[0]
+    book_description['author'] = author.strip()
+    book_description['title'] = title.strip()
 
     # комментарии
     raw_comments = soup.find_all('div', class_='texts')
