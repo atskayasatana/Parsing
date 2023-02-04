@@ -114,18 +114,18 @@ if __name__ == '__main__':
     parser.add_argument('--end_id', help='На каком id закончим', type=int, default=10)
     args = parser.parse_args()
 
-    start_id = parser.start_id
-    end_id = parser.end_id
+    book_start_id = parser.start_id
+    book_end_id = parser.end_id
 
-    if start_id > end_id:
-        start_id, end_id = end_id, start_id
+    if book_start_id > book_end_id:
+        book_start_id, book_end_id = book_end_id, book_start_id
 
-    base_dir = os.path.dirname(os.path.realpath(__file__))
+    project_dir = os.path.dirname(os.path.realpath(__file__))
 
-    Path(os.path.join(base_dir, 'books')).mkdir(parents=True, exist_ok=True)
-    Path(os.path.join(base_dir, 'images')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(project_dir, 'books')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(project_dir, 'images')).mkdir(parents=True, exist_ok=True)
 
-    for i in range(start_id, end_id):
+    for book_id in range(start_id, end_id):
         try:
             book_url = f'https://tululu.org/b{i}/'
             book_description = parse_book_page(book_url)
