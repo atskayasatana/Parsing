@@ -51,38 +51,34 @@ def download_img(url, filename, folder='images/'):
 
 def parse_book_page(response):
 
-    book_description = {}
-    comments = []
-    genres = []
-
     soup = BeautifulSoup(response.text, 'lxml')
 
     # автор и название
     title, author = soup.find('h1').text.replace('\xa0', '').split('::')
-
-    book_description['author'] = author.strip()
-    book_description['title'] = title.strip()
+    author = author.strip()
+    title = title.strip()
 
     # комментарии
     raw_comments = soup.find_all('div', class_='texts')
     comments = [comment.find('span').text for comment in raw_comments]
 
-    book_description['comments'] = comments
-
     # жанры
     raw_genres = soup.find('span', class_='d_book').find_all('a')
     genres = [genre.text for genre in raw_genres]
-
-    book_description['genres'] = genres
 
     # обложка
 
     img_short_path = soup.find('div', class_='bookimage').find('img')['src']
     img_path = urljoin('https://tululu.org/', img_short_path)
 
-    book_description['cover'] = img_path
 
-
+    book_description = {
+        'author': author,
+        'title': title,
+        'genres': genres,
+        'comments': comments,
+        'cover': img_path
+    }
 
     return book_description
 
