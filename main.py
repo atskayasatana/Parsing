@@ -8,7 +8,7 @@ from pathvalidate import sanitize_filename
 from urllib.parse import urljoin
 
 
-def download_txt(url, filename, folder='books/'):
+def download_txt(url, payload, filename, folder='books/'):
     """Функция для скачивания текстовых файлов.
     Args:
         url (str): Cсылка на текст, который хочется скачать.
@@ -17,7 +17,7 @@ def download_txt(url, filename, folder='books/'):
     Returns:
         str: Путь до файла, куда сохранён текст.
     """
-    response = requests.get(url)
+    response = requests.get(url, params=payload)
     response.raise_for_status()
 
     if check_for_redirect(response) == 0:
@@ -71,7 +71,6 @@ def parse_book_page(response):
     img_short_path = soup.find('div', class_='bookimage').find('img')['src']
     img_path = urljoin(response.url, img_short_path)
 
-
     book_description = {
         'author': author,
         'title': title,
@@ -113,15 +112,17 @@ if __name__ == '__main__':
 
     for book_id in range(start_id, end_id):
         try:
-            book_url = f'https://tululu.org/b{book_id}/'
-            response = requests.get(url)
+            payload = {'b':book_id}
+            url = 'https://tululu.org'
+            response = requests.get(url, params=payload)
             response.raise_for_status()
             check_for_redirect(response)
             book_description = parse_book_page(response)
-            book_download_url = f'https://tululu.org/txt.php?id={book_id}'
+            book_download_url = f'{urljoin(url,"txt.php")}'
+            book_download_params = {'id':book_id}
             book_filename = f'{i}. {book_description["title"]}.txt'
             book_img_filename = f'{i}. {book_description["title"]}.jpg'
-            download_txt(book_download_url, book_filename)
+            download_txt(book_download_url, book_download_params, book_filename)
             download_img(book_description['cover'], book_img_filename)
         except requests.exceptions.HTTPError:
             print('Ошибка скачивания')
