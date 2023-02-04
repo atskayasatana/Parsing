@@ -49,16 +49,12 @@ def download_img(url, filename, folder='images/'):
     return book_image_path
 
 
-def parse_book_page(url):
+def parse_book_page(response):
 
     book_description = {}
     book = []
     comments = []
     genres = []
-
-    response = requests.get(url)
-    response.raise_for_status()
-    check_for_redirect(response)
 
     soup = BeautifulSoup(response.text, 'lxml')
 
@@ -128,7 +124,10 @@ if __name__ == '__main__':
     for book_id in range(start_id, end_id):
         try:
             book_url = f'https://tululu.org/b{book_id}/'
-            book_description = parse_book_page(book_url)
+            response = requests.get(url)
+            response.raise_for_status()
+            check_for_redirect(response)
+            book_description = parse_book_page(response)
             book_download_url = f'https://tululu.org/txt.php?id={book_id}'
             book_filename = f'{i}. {book_description["title"]}.txt'
             book_img_filename = f'{i}. {book_description["title"]}.jpg'
