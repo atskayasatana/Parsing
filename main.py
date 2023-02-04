@@ -19,12 +19,11 @@ def download_txt(url, payload, filename, folder='books/'):
     """
     response = requests.get(url, params=payload)
     response.raise_for_status()
-
-    if check_for_redirect(response) == 0:
-        sanitized_filename = sanitize_filename(filename)
-        book_path = os.path.join(folder, sanitized_filename)
-        with open(book_path, 'wb') as file:
-            file.write(response.content)
+    check_for_redirect(response)
+    sanitized_filename = sanitize_filename(filename)
+    book_path = os.path.join(folder, sanitized_filename)
+    with open(book_path, 'wb') as file:
+        file.write(response.content)
     return book_path
 
 
@@ -39,13 +38,10 @@ def download_img(url, filename, folder='images/'):
     """
     response = requests.get(url)
     response.raise_for_status()
-
-    if check_for_redirect(response) == 0:
-        sanitized_filename = sanitize_filename(filename)
-        book_image_path = os.path.join(folder, sanitized_filename)
-        with open(book_image_path, 'wb') as file:
-            file.write(response.content)
-
+    sanitized_filename = sanitize_filename(filename)
+    book_image_path = os.path.join(folder, sanitized_filename)
+    with open(book_image_path, 'wb') as file:
+        file.write(response.content)
     return book_image_path
 
 
@@ -85,10 +81,6 @@ def parse_book_page(response):
 def check_for_redirect(response):
     if response.history:
         raise requests.exceptions.HTTPError
-        return 1
-    else:
-        return 0
-
 
 if __name__ == '__main__':
 
