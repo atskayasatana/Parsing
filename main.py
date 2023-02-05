@@ -5,9 +5,8 @@ import requests
 from bs4 import BeautifulSoup
 from pathlib import Path
 from pathvalidate import sanitize_filename
-from retry import retry
 from urllib.parse import urljoin
-from urllib3.exceptions import HTTPError, ProxyError, ProtocolError
+from urllib3.exceptions import HTTPError
 
 
 def download_txt(url, payload, filename, folder='books/'):
@@ -86,7 +85,6 @@ def check_for_redirect(response):
         raise HTTPError
 
 
-
 def main():
     parser = argparse.ArgumentParser(
                  description='Скачиваем книги с сайта tululu.org'
@@ -120,7 +118,9 @@ def main():
     for book_id in range(book_start_id, book_end_id):
         try:
             url = 'https://tululu.org'
-            response = requests.get(urljoin(url, f'b{book_id}'), allow_redirects=True)
+            response = requests.get(urljoin(url, f'b{book_id}'),
+                                    allow_redirects=True
+                                    )
             check_for_redirect(response)
             response.raise_for_status()
             book_description = parse_book_page(response)
@@ -144,6 +144,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
