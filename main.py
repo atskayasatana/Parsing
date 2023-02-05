@@ -7,7 +7,7 @@ from pathlib import Path
 from pathvalidate import sanitize_filename
 from retry import retry
 from urllib.parse import urljoin
-from urllib3.exceptions import HTTPError, ProxyError
+from urllib3.exceptions import HTTPError, ProxyError, ProtocolError
 
 
 def download_txt(url, payload, filename, folder='books/'):
@@ -81,13 +81,12 @@ def parse_book_page(response):
 
 
 def check_for_redirect(response):
-    url = response.url
-    if url == 'https://tululu.org/' and response.history:
+    redirect_statuses = [redirect.status_code for redirect in response.history]
+    if 302 in redirect_statuses:
         raise HTTPError
-        print(response.history)
 
 
-@retry(requests.ConnectionError, tries=100, delay=1)
+
 def main():
     parser = argparse.ArgumentParser(
                  description='Скачиваем книги с сайта tululu.org'
@@ -121,7 +120,8 @@ def main():
     for book_id in range(book_start_id, book_end_id):
         try:
             url = 'https://tululu.org'
-            response = requests.get(urljoin(url, f'b{book_id}'))
+            response = requests.get(urljoin(url, f'b{book_id}'), allow_redirects=True)
+            print(book_id)
             check_for_redirect(response)
             response.raise_for_status()
             book_description = parse_book_page(response)
@@ -136,9 +136,13 @@ def main():
             download_img(book_description['cover'], book_img_filename)
         except HTTPError:
             print('Ошибка скачивания')
-        except ProxyError:
-            print('Ошибка соединения')
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except (ProxyError, ProtocolError, requests.exceptions.ConnectionError):
+        print('Ошибка соединения')
+        main()
+
+
