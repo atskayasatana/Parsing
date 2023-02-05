@@ -121,7 +121,6 @@ def main():
         try:
             url = 'https://tululu.org'
             response = requests.get(urljoin(url, f'b{book_id}'), allow_redirects=True)
-            print(book_id)
             check_for_redirect(response)
             response.raise_for_status()
             book_description = parse_book_page(response)
@@ -136,13 +135,15 @@ def main():
             download_img(book_description['cover'], book_img_filename)
         except HTTPError:
             print('Ошибка скачивания')
+        except requests.exceptions.ConnectionError:
+            print('Проблемы с подключением...')
+            os.system('cls')
+            print('')
+            return main()
 
 
 if __name__ == '__main__':
-    try:
-        main()
-    except (ProxyError, ProtocolError, requests.exceptions.ConnectionError):
-        print('Ошибка соединения')
-        main()
+    main()
+
 
 
