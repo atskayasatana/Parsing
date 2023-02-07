@@ -1,5 +1,7 @@
 import argparse
 import os
+import time
+
 import requests
 
 from bs4 import BeautifulSoup
@@ -120,6 +122,7 @@ def main():
             response = requests.get(urljoin(url, f'b{book_id}/'),
                                     allow_redirects=True
                                     )
+            print(book_id)
             check_for_redirect(response)
             response.raise_for_status()
             book_description = parse_book_page(response)
@@ -135,10 +138,12 @@ def main():
         except HTTPError:
             print('Ошибка скачивания')
         except requests.exceptions.ConnectionError:
+            attempt_to_connect = 0
             print('Проблемы с подключением...')
-            os.system('cls')
-            print('')
-            return main()
+            while attempt_to_connect < 15:
+                time.sleep(1.5)
+                attempt_to_connect += 1
+            pass
 
 
 if __name__ == '__main__':
