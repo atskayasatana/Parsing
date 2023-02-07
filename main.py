@@ -80,8 +80,7 @@ def parse_book_page(response):
 
 
 def check_for_redirect(response):
-    redirect_statuses = [redirect.status_code for redirect in response.history]
-    if 302 in redirect_statuses:
+    if response.history:
         raise HTTPError
 
 
@@ -118,7 +117,7 @@ def main():
     for book_id in range(book_start_id, book_end_id):
         try:
             url = 'https://tululu.org'
-            response = requests.get(urljoin(url, f'b{book_id}'),
+            response = requests.get(urljoin(url, f'b{book_id}/'),
                                     allow_redirects=True
                                     )
             check_for_redirect(response)
